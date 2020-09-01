@@ -10,7 +10,7 @@ app = Flask(__name__)
 app.static_folder = "static"
 
 # initialize Assistant
-assistant = Assistant(app, '/google')
+assistant = Assistant(app, "/google")
 
 @app.route("/")
 def index():
@@ -29,23 +29,40 @@ def markdown_render():
     return md_css_string + md_template_string
 
 
-
 @app.route("/random", methods=["GET", "POST"])
 def webhook():
-    req = request.get_json(silent=True, force=True)
-    res = get_random_number()
+    # parse data from request
+    if request.method == "POST":
+        req = request.get_json(silent=True, force=True)
+        params = req["queryResult"]["parameters"]
+        if "min" in :
+            if params["min"] is not '':
+                print(params)
+                params
+                minNum = params["min"]
+                maxNum = params["max"]
+                res = get_random_number(minNum=minNum, maxNum=maxNum)
+            else:
+                print(params)
+                res = get_random_number()
+
     res = json.dumps(res, indent=4)
     r = make_response(res)
-    r.headers['Content-Type']='application/json'
+    r.headers["Content-Type"]="application/json"
     return r
 
-def get_random_number():
+
+def get_random_number(minNum=0, maxNum=100):
+    randomNum = random.randint(minNum, maxNum)
+    return fulfillment_message(str(randomNum))
+
+def fulfillment_message(text):
     return {
         "fulfillmentMessages": [
             {
                 "text": {
                     "text": [
-                        str(random.randint(0,100))
+                        text
                     ]
                 }
             }
@@ -54,6 +71,5 @@ def get_random_number():
 
 
 if __name__ == "__main__":
-    app.config['TEMPLATES_AUTO_RELOAD'] = True
-    #app.run(ssl_context=('ssl/cert.pem', 'ssl/key.pem'))
+    app.config["TEMPLATES_AUTO_RELOAD"] = True
     app.run(port=5000)
