@@ -15,21 +15,33 @@ app.static_folder = "static"
 def index():
     return render_template("index.html")
 
+
+@app.route("/privacy-policy")
+def privacy():
+    return render_template("privacy_policy.html")
+
+
 @app.route("/urban", methods=["GET", "POST"])
 def webhook():
     # parse data from request
     if request.method == "POST":
+        #determine if voice or text output
+
+
         req = request.get_json(silent=True, force=True)
+        print(req)
+
         params = req["queryResult"]["parameters"]
         if "phrase" in params and params["phrase"] is not None:
             phrase = params["phrase"]
             print(phrase)
             res = define(phrase)
-
-    res = json.dumps(res, indent=4)
-    r = make_response(res)
-    r.headers["Content-Type"]="application/json"
-    return r
+            
+            res = assistant_response(res)
+            res = json.dumps(res, indent=4)
+            r = make_response(res)
+            r.headers["Content-Type"]="application/json"
+            return r
 
 def define(phrase):
     url = "https://mashape-community-urban-dictionary.p.rapidapi.com/define"
@@ -50,9 +62,8 @@ def define(phrase):
         definition = definition.replace("[", "")
         definition = definition.replace("]", "")
         print(definition)
-        return fulfillment_message(definition)
-    else:
-        return fulfillment_message("no definition was found")
+        return definition
+
 
 def fulfillment_message(text):
     return {
@@ -68,6 +79,25 @@ def fulfillment_message(text):
     }
 
 
-if __name__ == "__main__":
+def assistant_response(text):
+    return {
+            "payload": {
+                "google": {
+                    "expectUserResponse": True,
+                    "richResponse": {
+                        "items": [
+                            {
+                                "simpleResponse": {
+                                    "textToSpeech": text
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+
+
+if  __name__ == "__main__":
     app.config["TEMPLATES_AUTO_RELOAD"] = True
     app.run(port=5000)
