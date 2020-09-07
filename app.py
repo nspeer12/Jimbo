@@ -29,19 +29,27 @@ def webhook():
 
 
         req = request.get_json(silent=True, force=True)
-        print(req)
 
+        f = open("request.txt", "w")
+        f.write(json.dumps(req, indent=4, sort_keys=True))
+        f.close()
+        # get intent 
+        intent = req["queryResult"]["intent"]["displayName"]
+        print(intent)
         params = req["queryResult"]["parameters"]
-        if "phrase" in params and params["phrase"] is not None:
-            phrase = params["phrase"]
-            print(phrase)
-            res = define(phrase)
+
+        if intent == "define":
+            if "phrase" in params and params["phrase"] is not None:
+                phrase = params["phrase"]
+                #print(phrase)
+                res = define(phrase)
             
-            res = assistant_response(res)
-            res = json.dumps(res, indent=4)
-            r = make_response(res)
-            r.headers["Content-Type"]="application/json"
-            return r
+                res = assistant_response(res)
+                res = json.dumps(res, indent=4)
+                r = make_response(res)
+                r.headers["Content-Type"]="application/json"
+                return r
+
 
 def define(phrase):
     url = "https://mashape-community-urban-dictionary.p.rapidapi.com/define"
@@ -83,7 +91,7 @@ def assistant_response(text):
     return {
             "payload": {
                 "google": {
-                    "expectUserResponse": True,
+                    "expectUserResponse": False,
                     "richResponse": {
                         "items": [
                             {
